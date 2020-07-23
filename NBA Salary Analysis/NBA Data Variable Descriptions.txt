@@ -1,0 +1,25 @@
+Variable Definitions:
+
+player              Player's name.
+team                Abbreviation for the team the player is on.
+pos                 Position played.
+age                 Player age.
+salary              Player salary ($ millions)
+netrtg              Average of the offensive/defensive rating.
+astpct              Assist percentage.
+rebpct              Total rebounds.
+ts                  True Shooting Percentage; an imputed measure of shooting efficiency.
+usg                 Usage percentage, an estimate of how often a player makes team plays.
+followers           Number of Twitter followers (millions).
+tov                 Turnover rate.
+ftar                Free throw attempt rate.
+vorp                Value over replacement player.
+ortg		    Player offensive rating.
+drtg                Player defensive rating.
+orebpct             Offensive rebounds.
+drebpct             Defensive rebounds.
+efg                 Effective field goal percentage. This is an imputed statistic.
+pts                 Points scored.
+twitter             Indicator variable for Twitter account.
+bpm                 Box plus-minus.
+ws                  Win share.
