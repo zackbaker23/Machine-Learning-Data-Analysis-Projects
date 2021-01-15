@@ -1,2 +1,2 @@
-# Machine Learning Projects
-My personal machine learning project code and data files.
+# Machine Learning and Data Analysis Projects
+My personal project code and data files.
