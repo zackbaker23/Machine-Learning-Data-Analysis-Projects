@@ -1,0 +1,1 @@
+To follow along with the analysis procedure, begin by running R Code.R in R with Final_Data.xlsx. This uses backward stepwise variable selection to create sub_data.csv. Then use the SAS Code.txt in SAS with sub_data.csv to complete the analysis.
