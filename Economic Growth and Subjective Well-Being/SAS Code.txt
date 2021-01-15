@@ -1,0 +1,93 @@
+*Load the sub_data
+
+*Ran the lasso regression model in R, left with these candidate variables
+*for further analysis in SAS.;
+
+%web_drop_table(WORK.sub_data);
+FILENAME REFFILE '/folders/myfolders/sasuser.v94/sub_data.csv';
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=CSV
+	OUT=WORK.sub_data;
+	GETNAMES=YES;
+RUN;
+%web_open_table(WORK.sub_data);
+
+*Rename variables;
+data work.sub_data(drop=Var1);
+set work.sub_data;
+rename GNI_per_capita__Atlas_method__c=GNI_Per_Capita
+       Government_expenditure_on_educa=Gov_Ed_Spending
+       Individuals_using_the_Internet=Internet_Use
+       Life_expectancy_at_birth__total=Life_Exp
+       Nurses_and_midwives__per_1_000=Nurses_Midwives
+       PM2_5_air_pollution__mean_annua=Air_Pollution
+       Population_growth__annual___=Pop_Growth
+       Urban_population____of_total_po=Urban_Pop
+;
+run;
+
+*Add dummy variable for income level (high/low) - Using WB category;
+data work.sub_data;
+set work.sub_data;
+if GNI_Per_Capita > 12475 then High_Income = 1;
+else High_Income=0;
+run;
+
+*Create variable scatterplot for the data;
+proc sgscatter data=work.sub_data;
+  title "Scatterplot Matrix";
+  matrix Happiness_Score GNI_Per_Capita Gov_Ed_Spending Internet_Use
+  Life_Exp Nurses_Midwives Air_Pollution Pop_Growth Urban_Pop
+;
+RUN;
+title;
+
+*Most of these variables seem to have a linear relationship with the happiness score,
+but GNI per capita seems to be an issue. Let's plot GNI vs. happiness score to get a closer 
+look;
+proc sgscatter data=work.sub_data;
+  title "Scatterplot Matrix";
+  matrix Happiness_Score GNI_Per_Capita 
+;
+RUN;
+title;
+
+*Sqrt is the best transformation for GNI, so we can use that.
+
+*Add sqrt(GNI_PC) to the data set, as well as interaction term;
+DATA work.sub_data;
+    SET work.sub_data;
+    sqrt_GNI_PC = (GNI_Per_Capita)**(1/2);
+    High_INC_GNI_PC=High_Income*sqrt_GNI_PC;
+    High_INC_Pop_Growth=High_Income*Pop_Growth;
+RUN;
+
+*Plot the new variable vs. happiness score;
+proc sgscatter data=work.sub_data;
+  title "Scatterplot Matrix";
+  matrix Happiness_Score sqrt_GNI_PC 
+;
+RUN;
+title;
+
+*Run the initial model selected by the lasso regression in R, plus interaction term;
+proc reg data=work.sub_data;
+model Happiness_Score = sqrt_GNI_PC High_INC_GNI_PC Gov_Ed_Spending Internet_Use Life_Exp 
+Nurses_Midwives Air_Pollution Pop_Growth Urban_Pop High_INC_Pop_Growth / vif
+;
+run;
+
+*Some of the variances are inflated, seems like there is still multicollinearity.
+Let's try stepwise selection to see if we can reduce the number of variables without
+reducing the amount of information produced by the model.;
+proc reg data=work.sub_data plots(only) = CooksD(label);
+model Happiness_Score = sqrt_GNI_PC High_INC_GNI_PC Gov_Ed_Spending Internet_Use Life_Exp 
+Nurses_Midwives Air_Pollution Pop_Growth Urban_Pop High_INC_Pop_Growth / influence vif slstay=0.15 slentry=0.15
+selection=backward ss2 sse aic;
+  ;
+run;
+
+*Interaction term is removed in the stepwise model, so we have some evidence that the 
+impact of GNI on happiness does not depend on initial income level. I also ran the model
+chosen by stepwise selection with the interaction term and the p-value was very large.
+The same thing is true about income and population growth!;
